@@ -42,15 +42,14 @@ func getStructures(c chan<- structure) {
 			Number:  i,
 			URLCode: strconv.Itoa(i + 88),
 		}
-		s.Spaces = getSpaces(s)
+		s.Spaces = s.getSpaces()
 
 		c <- s
 	}
 	close(c)
 }
 
-// TODO: Turn this into an interface method
-func getSpaces(s structure) []space {
+func (s structure) getSpaces() []space {
 
 	spaces := []space{
 		space{Name: "WSU Permit"},
@@ -59,7 +58,7 @@ func getSpaces(s structure) []space {
 	}
 	re := map[string]*regexp.Regexp{
 		"avail":   regexp.MustCompile(`[0-9]+`),
-		"status":  regexp.MustCompile(`(OPEN|CLOSED)`),
+		"status":  regexp.MustCompile(`(OPEN|CLOSED|FULL)`),
 		"updated": regexp.MustCompile(`(?P<1>^.+: )(?P<2>.+)`),
 	}
 
