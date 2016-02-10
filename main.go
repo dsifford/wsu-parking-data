@@ -105,7 +105,7 @@ func (s structure) getSpaces() []space {
 
 func writeData(s structure) {
 
-	file, err := os.OpenFile(s.Name+".csv", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile("/home/dsifford/Dropbox/ParkingData/"+s.Name+".csv", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatalln("CSV file could not be created or opened:", err)
 	}
