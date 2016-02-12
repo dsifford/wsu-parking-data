@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"errors"
 	"github.com/yhat/scrape"
 	"golang.org/x/net/html"
 	"log"
@@ -42,14 +43,23 @@ func getStructures(c chan<- structure) {
 			Number:  i,
 			URLCode: strconv.Itoa(i + 88),
 		}
-		s.Spaces = s.getSpaces()
+
+		// Attempt the request a total of 5 times
+		var err error
+		for j := 0; j < 5; j++ {
+			s.Spaces, err = s.getSpaces()
+			if err != nil {
+				continue
+			}
+			break
+		}
 
 		c <- s
 	}
 	close(c)
 }
 
-func (s structure) getSpaces() []space {
+func (s structure) getSpaces() ([]space, error) {
 
 	spaces := []space{
 		space{Name: "WSU Permit"},
@@ -66,20 +76,20 @@ func (s structure) getSpaces() []space {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "http://m.wayne.edu/parking.php?location="+s.URLCode, nil)
 	if err != nil {
-		log.Fatalln("Error making request:", err)
+		return spaces, errors.New("Request failed")
 	}
 	req.Header.Set("User-Agent", "Apple-iPhone6C1/")
 
 	// Response
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln("Error sending request:", err)
+		return spaces, errors.New("Response failed")
 	}
 	defer resp.Body.Close()
 
 	body, err := html.Parse(resp.Body)
 	if err != nil {
-		log.Fatalln("Error parsing response body:", err)
+		return spaces, errors.New("Error parsing response body")
 	}
 
 	// Parse relevant response data
@@ -99,7 +109,7 @@ func (s structure) getSpaces() []space {
 		spaces[key].Updated = updated
 	}
 
-	return spaces
+	return spaces, nil
 
 }
 
