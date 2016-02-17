@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 type space struct {
@@ -49,9 +50,15 @@ func getStructures(c chan<- structure) {
 		for j := 0; j < 5; j++ {
 			s.Spaces, err = s.getSpaces()
 			if err != nil {
+				time.Sleep(time.Second * 5)
 				continue
 			}
 			break
+		}
+		if err != nil {
+			file, _ := os.OpenFile("/home/dsifford/Dropbox/ParkingData/errorlog.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+			defer file.Close()
+			file.WriteString(err.Error())
 		}
 
 		c <- s
@@ -73,7 +80,9 @@ func (s structure) getSpaces() ([]space, error) {
 	}
 
 	// Request
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
 	req, err := http.NewRequest("GET", "http://m.wayne.edu/parking.php?location="+s.URLCode, nil)
 	if err != nil {
 		return spaces, errors.New("Request failed")
