@@ -74,7 +74,7 @@ func (s structure) getSpaces() ([]space, error) {
 		space{Name: "Visitor"},
 	}
 	re := map[string]*regexp.Regexp{
-		"avail":   regexp.MustCompile(`[0-9]+`),
+		"avail":   regexp.MustCompile(`([0-9]+|NONE)`),
 		"status":  regexp.MustCompile(`(OPEN|CLOSED|FULL)`),
 		"updated": regexp.MustCompile(`(?P<1>^.+: )(?P<2>.+)`),
 	}
