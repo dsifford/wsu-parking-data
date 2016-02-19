@@ -76,7 +76,7 @@ func (s structure) getSpaces() ([]space, error) {
 	re := map[string]*regexp.Regexp{
 		"avail":   regexp.MustCompile(`([0-9]+|NONE)`),
 		"status":  regexp.MustCompile(`(OPEN|CLOSED|FULL)`),
-		"updated": regexp.MustCompile(`(?P<1>^.+: )(?P<2>.+)`),
+		"updated": regexp.MustCompile(`(?P<a>^.+: )(?P<b>.+)`),
 	}
 
 	// Request
@@ -102,20 +102,32 @@ func (s structure) getSpaces() ([]space, error) {
 	}
 
 	// Parse relevant response data
-	dataString, _ := scrape.Find(body, scrape.ByClass("available"))
-	lastUpdated, _ := scrape.Find(body, scrape.ByClass("last_updated"))
+	dataString, ok := scrape.Find(body, scrape.ByClass("available"))
+	if !ok {
+		return spaces, errors.New("Error: Line 105 - scrape.Find (available) -- not finding scrape info")
+	}
+	lastUpdated, ok := scrape.Find(body, scrape.ByClass("last_updated"))
+	if !ok {
+		return spaces, errors.New("Error: Line 109 - scrape.Find (last_updated) -- not finding scrape info")
+	}
 
 	avail := re["avail"].FindAllString(scrape.Text(dataString), -1)
 	if len(avail) == 0 {
 		avail = []string{"0", "0", "0"}
 	}
 	status := re["status"].FindAllString(scrape.Text(dataString), -1)
-	updated := re["updated"].FindStringSubmatch(scrape.Text(lastUpdated))[2]
+	if len(status) != 3 {
+		return spaces, errors.New("Error: Line 118 - FindAllString (status) not returning 3 matches")
+	}
+	updated := re["updated"].FindStringSubmatch(scrape.Text(lastUpdated))
+	if len(updated) == 0 {
+		return spaces, errors.New("Error: Line 122 - FindAllStringSubmatch (updated) not finding a match")
+	}
 
 	for key := range spaces {
 		spaces[key].Available = avail[key]
 		spaces[key].Status = status[key]
-		spaces[key].Updated = updated
+		spaces[key].Updated = updated[2]
 	}
 
 	return spaces, nil
